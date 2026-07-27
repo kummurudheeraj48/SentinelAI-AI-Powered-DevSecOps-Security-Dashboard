@@ -1,0 +1,42 @@
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: sentinel_postgres
+    environment:
+      POSTGRES_USER: sentinel_admin
+      POSTGRES_PASSWORD: secure_password_123
+      POSTGRES_DB: sentinel_ai_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./database/init.sql:/docker-entrypoint-initdb.d/init.sql
+    restart: unless-stopped
+
+  backend:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.backend
+    container_name: sentinel_backend
+    environment:
+      POSTGRES_DB_URL: postgresql://sentinel_admin:secure_password_123@postgres:5432/sentinel_ai_db
+      OPENAI_API_KEY: your-openai-api-key
+    ports:
+      - "8000:8000"
+    depends_on:
+      - postgres
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.frontend
+    container_name: sentinel_frontend
+    ports:
+      - "3000:80"
+    depends_on:
+      - backend
+    restart: unless-stopped
+
+volumes:
+  pgdata:
