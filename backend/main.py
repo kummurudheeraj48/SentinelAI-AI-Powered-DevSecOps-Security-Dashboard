@@ -216,15 +216,14 @@ class SnortAlertRequest(BaseModel):
 
 @app.post("/network/alerts")
 def add_snort_alert(
-    payload: SnortAlertRequest,
+    source_ip: str,
+    dest_ip: str,
+    alert_message: str,
+    severity: str = "medium",
+    raw_log: str = None,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(get_current_user),
 ):
-    source_ip = payload.source_ip
-    dest_ip = payload.dest_ip
-    alert_message = payload.alert_message
-    severity = payload.severity
-    raw_log = payload.raw_log
     alert = models.SnortAlert(
         source_ip=source_ip,
         dest_ip=dest_ip,
@@ -236,7 +235,6 @@ def add_snort_alert(
     db.commit()
     db.refresh(alert)
     return {"id": alert.id, "status": "created"}
-
 
 @app.get("/network/alerts")
 def get_snort_alerts(db: Session = Depends(get_db), current_user: models.User = Depends(get_current_user)):
